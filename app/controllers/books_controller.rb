@@ -1,11 +1,17 @@
 class BooksController < ApplicationController
+  before_action :authenticate_user!,except: [:top, :about] # top, about の2つのアクションのみ、ログイン無しでもアクセス可能にする
+  before_action :ensure_correct_user, only: [:destroy,:edit,:update]
+
 
   def show
     @book = Book.find(params[:id])
+    @user = @book.user 
+    @book_new = Book.new
   end
 
   def index
     @books = Book.all
+    @book = Book.new
   end
 
   def create
@@ -32,15 +38,22 @@ class BooksController < ApplicationController
     end
   end
 
-  def delete
+  def destroy
     @book = Book.find(params[:id])
-    @book.destoy
+    @book.destroy
     redirect_to books_path
   end
 
   private
 
   def book_params
-    params.require(:book).permit(:title)
+    params.require(:book).permit(:title,:body,:profile_image)
+  end
+
+  def ensure_correct_user
+    @book = Book.find(params[:id])
+    unless @book.user == current_user
+      redirect_to books_path
+    end
   end
 end
